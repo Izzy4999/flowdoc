@@ -24,9 +24,10 @@ export default defineConfig([
     dts: false,
   },
   // Public API (the `flowdoc` import users put in their server)
+  // Build both ESM and CJS so it works in any project type
   {
     entry: { index: "src/index.ts" },
-    format: ["esm"],
+    format: ["esm", "cjs"],
     target: "node18",
     bundle: true,
     noExternal: ["@flowdoc/core", "@flowdoc/parser"],
@@ -43,6 +44,6 @@ export default defineConfig([
       "express",
     ],
     clean: false,
-    dts: true,
+    dts: { resolve: ["@flowdoc/core", "@flowdoc/parser"] },
   },
 ]);
