@@ -13,7 +13,8 @@ export const useSpec = (): UseSpecResult => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("./flowdoc.json")
+    const docsBase = (window as unknown as Record<string, string>)["__FLOWDOC_DOCS_BASE__"] ?? "";
+    fetch(`${docsBase}/flowdoc.json`)
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json() as Promise<FlowDocSpec>;

@@ -30,6 +30,7 @@ export default defineConfig([
     format: ["esm", "cjs"],
     target: "node18",
     bundle: true,
+    shims: true,
     noExternal: ["@flowdoc/core", "@flowdoc/parser"],
     external: [
       "ts-morph",

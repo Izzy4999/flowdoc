@@ -17,6 +17,13 @@ export interface FlowDocMiddlewareOptions {
   config?: string;
   /** Route prefix the middleware is mounted at — used only for the HTML shell */
   path?: string;
+  /**
+   * Disable the docs endpoint. Useful for production environments.
+   * Defaults to `process.env.NODE_ENV === "production"` when not set,
+   * meaning docs are served in development and blocked in production.
+   * Pass `false` to explicitly enable in production; `true` to always block.
+   */
+  disabled?: boolean;
 }
 
 /**
@@ -28,6 +35,7 @@ export interface FlowDocMiddlewareOptions {
  *   app.use("/docs", flowdoc());
  */
 export const flowdoc = (opts: FlowDocMiddlewareOptions = {}) => {
+  const disabled = opts.disabled ?? process.env.NODE_ENV === "production";
   const cwd = process.cwd();
   let outputDir: string | null = null;
   let ready = false;
@@ -65,6 +73,11 @@ export const flowdoc = (opts: FlowDocMiddlewareOptions = {}) => {
   })();
 
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    if (disabled) {
+      res.status(403).send("API docs are not available in this environment.");
+      return;
+    }
+
     // Wait for init on first hit
     await init;
 
@@ -79,8 +92,11 @@ export const flowdoc = (opts: FlowDocMiddlewareOptions = {}) => {
     if (urlPath === "/index.html") {
       const brand = "#6366f1";
       const baseUrl = `${req.protocol}://${req.get("host")}`;
+      // req.baseUrl is the mount prefix ("/docs") — needed so relative asset
+      // paths resolve correctly whether or not the browser adds a trailing slash
+      const docsBase = req.baseUrl || "";
       res.setHeader("Content-Type", "text/html");
-      res.send(buildHtml({ baseUrl, brand }));
+      res.send(buildHtml({ baseUrl, brand, docsBase }));
       return;
     }
 
@@ -96,7 +112,7 @@ export const flowdoc = (opts: FlowDocMiddlewareOptions = {}) => {
   };
 };
 
-const buildHtml = ({ baseUrl, brand }: { baseUrl: string; brand: string }): string => `<!DOCTYPE html>
+const buildHtml = ({ baseUrl, brand, docsBase }: { baseUrl: string; brand: string; docsBase: string }): string => `<!DOCTYPE html>
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
@@ -105,9 +121,10 @@ const buildHtml = ({ baseUrl, brand }: { baseUrl: string; brand: string }): stri
     <script>
       window.__FLOWDOC_BRAND__ = "${brand}";
       window.__FLOWDOC_BASE_URL__ = "${baseUrl}";
+      window.__FLOWDOC_DOCS_BASE__ = "${docsBase}";
     </script>
-    <script type="module" crossorigin src="./assets/ui.js"></script>
-    <link rel="stylesheet" href="./assets/index.css" />
+    <script type="module" crossorigin src="${docsBase}/assets/ui.js"></script>
+    <link rel="stylesheet" href="${docsBase}/assets/index.css" />
   </head>
   <body><div id="root"></div></body>
 </html>`;

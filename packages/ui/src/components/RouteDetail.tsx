@@ -82,22 +82,32 @@ export const RouteDetail = ({ route, baseUrl, auth }: RouteDetailProps): JSX.Ele
           {/* Responses */}
           <Section title="Responses">
             <div className="flex flex-col gap-2">
-              {Object.entries(route.responses).map(([code, resp]) => (
-                <div
-                  key={code}
-                  className="flex items-start gap-3 bg-slate-900 rounded-lg border border-slate-800 p-3"
-                >
-                  <StatusCode code={code} />
-                  <span className="text-sm text-slate-400">{resp.description}</span>
-                </div>
-              ))}
+              {Object.entries(route.responses).map(([code, resp]) => {
+                const schema = resp.content?.["application/json"]?.schema ?? null;
+                return (
+                  <div
+                    key={code}
+                    className="flex flex-col gap-2 bg-slate-900 rounded-lg border border-slate-800 p-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <StatusCode code={code} />
+                      <span className="text-sm text-slate-400">{resp.description}</span>
+                    </div>
+                    {schema && (
+                      <div className="border-t border-slate-800 pt-2 pl-1">
+                        <SchemaViewer schema={schema} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </Section>
         </div>
       )}
 
       {tab === "playground" && (
-        <Playground route={route} baseUrl={baseUrl} auth={auth} />
+        <Playground key={`${route.method}-${route.path}`} route={route} baseUrl={baseUrl} auth={auth} />
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import {
   SourceFile,
   type CallExpression,
   type Expression,
+  type ObjectLiteralExpression,
   SyntaxKind,
 } from "ts-morph";
 import { glob } from "glob";
@@ -123,18 +124,29 @@ const tryExtractRoute = (call: CallExpression, ctx: ParseContext): RouteDoc | nu
   const { requestBody, parameters } = extractFromMiddleware(middlewareArgs, ctx);
   const pathParams = extractPathParameters(path);
   const handlerInfo = extractHandlerInfo(handlerArg);
+  const responseSchemas = extractResponseSchemas(handlerArg);
 
   // Merge path params that weren't already in middleware-extracted params
   const allParameters = mergeParameters(parameters, pathParams);
 
   const tags = inferTags(path);
 
+  // Build responses: start with defaults, overlay inferred schemas
+  const responses = buildDefaultResponses(method);
+  for (const [code, schema] of Object.entries(responseSchemas)) {
+    const existing = responses[code] ?? { description: `HTTP ${code}` };
+    responses[code] = {
+      ...existing,
+      content: { "application/json": { schema } },
+    };
+  }
+
   const route: RouteDoc = {
     method,
     path,
     tags,
     parameters: allParameters,
-    responses: buildDefaultResponses(method),
+    responses,
     middleware: middlewareArgs.map((m) => m.getText()),
   };
   if (handlerInfo.summary !== undefined) route.summary = handlerInfo.summary;
@@ -209,6 +221,81 @@ const extractPathParameters = (path: string): RouteParameter[] => {
   }
 
   return params;
+};
+
+const extractResponseSchemas = (
+  handler: Expression
+): Record<string, JsonSchema> => {
+  const result: Record<string, JsonSchema> = {};
+  const calls = handler.getDescendantsOfKind(SyntaxKind.CallExpression);
+
+  for (const call of calls) {
+    const expr = call.getExpression();
+    if (!Node.isPropertyAccessExpression(expr)) continue;
+
+    const methodName = expr.getName();
+    if (methodName !== "json" && methodName !== "send") continue;
+
+    // Determine status code: res.status(201).json(...) → "201", res.json(...) → "200"
+    let statusCode = "200";
+    const callee = expr.getExpression();
+    if (Node.isCallExpression(callee)) {
+      const statusExpr = callee.getExpression();
+      if (
+        Node.isPropertyAccessExpression(statusExpr) &&
+        statusExpr.getName() === "status"
+      ) {
+        const statusArg = callee.getArguments()[0];
+        if (statusArg && Node.isNumericLiteral(statusArg)) {
+          statusCode = statusArg.getText();
+        }
+      }
+    }
+
+    const args = call.getArguments();
+    if (args.length === 0) continue;
+    const arg = args[0];
+    if (!arg || !Node.isObjectLiteralExpression(arg)) continue;
+
+    const schema = schemaFromObjectLiteral(arg);
+    if (schema && Object.keys(schema.properties ?? {}).length > 0) {
+      // Keep the first occurrence per status code
+      if (!result[statusCode]) result[statusCode] = schema;
+    }
+  }
+
+  return result;
+};
+
+const schemaFromObjectLiteral = (obj: ObjectLiteralExpression): JsonSchema => {
+  const properties: Record<string, JsonSchema> = {};
+  for (const prop of obj.getProperties()) {
+    if (!Node.isPropertyAssignment(prop)) continue;
+    const name = prop.getNameNode().getText().replace(/['"]/g, "");
+    const init = prop.getInitializer();
+    if (!init) continue;
+    properties[name] = schemaFromValue(init);
+  }
+  return { type: "object", properties };
+};
+
+const schemaFromValue = (expr: Expression): JsonSchema => {
+  if (Node.isStringLiteral(expr) || Node.isTemplateExpression(expr) || Node.isNoSubstitutionTemplateLiteral(expr))
+    return { type: "string", example: Node.isStringLiteral(expr) ? expr.getLiteralValue() : undefined };
+  if (Node.isNumericLiteral(expr))
+    return { type: "number", example: Number(expr.getLiteralValue()) };
+  if (expr.getKind() === SyntaxKind.TrueKeyword || expr.getKind() === SyntaxKind.FalseKeyword)
+    return { type: "boolean", example: expr.getKind() === SyntaxKind.TrueKeyword };
+  if (Node.isNullLiteral(expr))
+    return { type: "null" };
+  if (Node.isArrayLiteralExpression(expr)) {
+    const items = expr.getElements()[0];
+    return { type: "array", items: items ? schemaFromValue(items) : {} };
+  }
+  if (Node.isObjectLiteralExpression(expr))
+    return schemaFromObjectLiteral(expr);
+  // Identifier or complex expression — treat as unknown
+  return {};
 };
 
 const extractHandlerInfo = (

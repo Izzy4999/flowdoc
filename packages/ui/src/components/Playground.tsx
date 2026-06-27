@@ -18,8 +18,11 @@ export const Playground = ({ route, baseUrl, auth }: PlaygroundProps): JSX.Eleme
   const bodySchema =
     route.requestBody?.content?.["application/json"]?.schema ?? null;
 
+  const hasBody = ["POST", "PUT", "PATCH"].includes(route.method);
   const defaultBody = bodySchema
     ? JSON.stringify(generateExample(bodySchema), null, 2)
+    : hasBody
+    ? "{}"
     : "";
 
   const [token, setToken] = useState("");
