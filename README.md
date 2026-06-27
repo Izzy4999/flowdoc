@@ -7,7 +7,7 @@ flowdoc scans your TypeScript source, extracts Express routes, infers schemas fr
 ## Install
 
 ```bash
-npm install flowdoc
+npm install flowdoc-gen
 ```
 
 ## Quick start
@@ -87,4 +87,4 @@ examples/
 
 ## License
 
-MIT — [Favour Israel Taiwo](https://portfolio-new-theta-amber.vercel.app/)
+MIT — [Favour Israel Taiwo](https://fiittech.fun)

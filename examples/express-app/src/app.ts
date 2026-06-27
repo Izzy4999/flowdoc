@@ -1,5 +1,5 @@
 import express from "express";
-import { flowdoc } from "flowdoc";
+import { flowdoc } from "flowdoc-gen";
 import { usersRouter } from "./routes/users.js";
 import { authRouter } from "./routes/auth.js";
 

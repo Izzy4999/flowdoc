@@ -1,10 +1,10 @@
 {
-  "name": "flowdoc",
+  "name": "flowdoc-gen",
   "version": "0.1.0",
   "description": "Auto-generate beautiful API documentation from your Express codebase — no annotations required",
   "type": "module",
   "bin": {
-    "flowdoc": "./dist/bin.js"
+    "flowdoc": "dist/bin.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -71,12 +71,12 @@
   "author": {
     "name": "Favour Israel Taiwo",
     "email": "princeisrael409@gmail.com",
-    "url": "https://portfolio-new-theta-amber.vercel.app/"
+    "url": "https://fiittech.fun"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Izzy4999/flowdoc.git"
+    "url": "git+https://github.com/Izzy4999/flowdoc.git"
   },
   "homepage": "https://github.com/Izzy4999/flowdoc#readme",
   "bugs": {

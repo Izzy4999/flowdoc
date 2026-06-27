@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
-    "flowdoc": "workspace:*",
+    "flowdoc-gen": "workspace:*",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }

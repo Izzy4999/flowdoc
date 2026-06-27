@@ -7,9 +7,9 @@ flowdoc scans your TypeScript source files, extracts Express routes, infers Zod 
 ## Install
 
 ```bash
-npm install flowdoc
+npm install flowdoc-gen
 # or
-pnpm add flowdoc
+pnpm add flowdoc-gen
 ```
 
 ## Quick start
@@ -26,7 +26,7 @@ This creates `flowdoc.config.ts` in your project root.
 
 ```ts
 import express from "express";
-import { flowdoc } from "flowdoc";
+import { flowdoc } from "flowdoc-gen";
 
 const app = express();
 app.use("/docs", flowdoc());
@@ -59,7 +59,7 @@ npx flowdoc serve --watch   # re-generate on file changes
 
 ```ts
 // flowdoc.config.ts
-import { defineConfig } from "flowdoc";
+import { defineConfig } from "flowdoc-gen";
 
 export default defineConfig({
   name: "My API",

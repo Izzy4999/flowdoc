@@ -27,7 +27,7 @@ importers:
       '@types/express':
         specifier: ^5.0.3
         version: 5.0.6
-      flowdoc:
+      flowdoc-gen:
         specifier: workspace:*
         version: link:../../packages/cli
       tsx:
