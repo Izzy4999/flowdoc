@@ -22,7 +22,6 @@ export default defineConfig([
     ],
     clean: false,
     dts: false,
-    banner: { js: "#!/usr/bin/env node" },
   },
   // Public API (the `flowdoc` import users put in their server)
   {
