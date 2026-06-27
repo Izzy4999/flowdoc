@@ -1,0 +1,89 @@
+{
+  "name": "flowdoc",
+  "version": "0.1.0",
+  "description": "Auto-generate beautiful API documentation from your Express codebase — no annotations required",
+  "type": "module",
+  "bin": {
+    "flowdoc": "./dist/bin.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "ui-assets",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "pnpm build:ui && tsup && pnpm copy:assets",
+    "build:ui": "pnpm --filter @flowdoc/ui build",
+    "copy:assets": "node -e \"const{cpSync,mkdirSync}=require('fs');mkdirSync('ui-assets',{recursive:true});cpSync('../ui/dist/assets','ui-assets',{recursive:true});\"",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist ui-assets"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "chokidar": "^4.0.3",
+    "commander": "^13.1.0",
+    "glob": "^11.0.2",
+    "open": "^10.1.2",
+    "ora": "^8.2.0",
+    "ts-morph": "^24.0.0",
+    "zod-to-json-schema": "^3.24.5"
+  },
+  "peerDependencies": {
+    "express": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@flowdoc/core": "workspace:*",
+    "@flowdoc/parser": "workspace:*",
+    "@flowdoc/ui": "workspace:*",
+    "@types/express": "^5.0.3",
+    "@types/node": "^26.0.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3"
+  },
+  "keywords": [
+    "api",
+    "documentation",
+    "docs",
+    "swagger",
+    "openapi",
+    "express",
+    "typescript",
+    "zod",
+    "auto-generate",
+    "cli"
+  ],
+  "author": {
+    "name": "Favour Israel Taiwo",
+    "email": "princeisrael409@gmail.com",
+    "url": "https://portfolio-new-theta-amber.vercel.app/"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Izzy4999/flowdoc.git"
+  },
+  "homepage": "https://github.com/Izzy4999/flowdoc#readme",
+  "bugs": {
+    "url": "https://github.com/Izzy4999/flowdoc/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}

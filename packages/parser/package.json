@@ -1,0 +1,39 @@
+{
+  "name": "@flowdoc/parser",
+  "version": "0.1.0",
+  "description": "AST parser and Express route extractor for flowdoc",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@flowdoc/core": "workspace:*",
+    "glob": "^11.0.2",
+    "ts-morph": "^24.0.0",
+    "zod-to-json-schema": "^3.24.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "zod": "^3.25.51"
+  },
+  "peerDependencies": {
+    "zod": ">=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "zod": {
+      "optional": true
+    }
+  }
+}
