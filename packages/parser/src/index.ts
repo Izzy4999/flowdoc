@@ -1,4 +1,8 @@
 export { extractExpressRoutes } from "./express-extractor.js";
+export { extractNestRoutes } from "./nest-extractor.js";
+export { extractFastifyRoutes } from "./fastify-extractor.js";
+export { extractHonoRoutes } from "./hono-extractor.js";
+export { extractKoaRoutes } from "./koa-extractor.js";
 export { extractZodSchemas, zodNodeToJsonSchema } from "./zod-extractor.js";
 export { extractYupSchemas, yupNodeToJsonSchema } from "./yup-extractor.js";
 export { extractJoiSchemas, joiNodeToJsonSchema } from "./joi-extractor.js";

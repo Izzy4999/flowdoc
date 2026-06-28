@@ -96,14 +96,14 @@ export interface FlowDocSpec {
   };
   groups: ApiGroup[];
   generatedAt: string;
-  sourceFramework: "express" | "nestjs";
+  sourceFramework: "express" | "nestjs" | "fastify" | "hono" | "koa";
 }
 
 export interface FlowDocConfig {
   name: string;
   version?: string;
   description?: string;
-  framework: "express" | "nestjs";
+  framework: "express" | "nestjs" | "fastify" | "hono" | "koa";
   entry: string;
   baseUrl?: string;
   auth?: FlowDocSpec["auth"];

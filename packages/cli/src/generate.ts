@@ -5,7 +5,13 @@ import chalk from "chalk";
 import ora from "ora";
 import type { FlowDocConfig, FlowDocSpec } from "@flowdoc/core";
 import { findConfigFile, loadConfig, resolveConfig } from "@flowdoc/core";
-import { extractExpressRoutes } from "@flowdoc/parser";
+import {
+  extractExpressRoutes,
+  extractNestRoutes,
+  extractFastifyRoutes,
+  extractHonoRoutes,
+  extractKoaRoutes,
+} from "@flowdoc/parser";
 import { buildSpec } from "@flowdoc/parser";
 
 export interface GenerateOptions {
@@ -46,7 +52,16 @@ export const generate = async (opts: GenerateOptions = {}): Promise<FlowDocSpec>
 
   let routes;
   try {
-    routes = await extractExpressRoutes(config);
+    routes =
+      config.framework === "nestjs"
+        ? await extractNestRoutes(config)
+        : config.framework === "fastify"
+        ? await extractFastifyRoutes(config)
+        : config.framework === "hono"
+        ? await extractHonoRoutes(config)
+        : config.framework === "koa"
+        ? await extractKoaRoutes(config)
+        : await extractExpressRoutes(config);
   } catch (err) {
     spinner?.fail(chalk.red(`Parse failed: ${String(err)}`));
     process.exit(1);
