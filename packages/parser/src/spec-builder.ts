@@ -7,7 +7,12 @@ export const buildSpec = (
   routes: RouteDoc[],
   config: FlowDocConfig
 ): FlowDocSpec => {
-  const groups = groupRoutes(routes, config.groups);
+  const filteredRoutes =
+    config.exclude && config.exclude.length > 0
+      ? routes.filter((r) => !config.exclude!.some((pattern) => matchesGlob(r.path, pattern)))
+      : routes;
+
+  const groups = groupRoutes(filteredRoutes, config.groups);
 
   return {
     info: {

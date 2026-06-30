@@ -124,7 +124,7 @@ const tryExtractRoute = (call: CallExpression, ctx: ParseContext): RouteDoc | nu
   const { requestBody, parameters } = extractFromMiddleware(middlewareArgs, ctx);
   const pathParams = extractPathParameters(path);
   const handlerInfo = extractHandlerInfo(handlerArg);
-  const responseSchemas = extractResponseSchemas(handlerArg);
+  const responseSchemas = extractResponseSchemas(handlerArg, ctx);
 
   // Merge path params that weren't already in middleware-extracted params
   const allParameters = mergeParameters(parameters, pathParams);
@@ -224,7 +224,8 @@ const extractPathParameters = (path: string): RouteParameter[] => {
 };
 
 const extractResponseSchemas = (
-  handler: Expression
+  handler: Expression,
+  ctx: ParseContext
 ): Record<string, JsonSchema> => {
   const result: Record<string, JsonSchema> = {};
   const calls = handler.getDescendantsOfKind(SyntaxKind.CallExpression);
@@ -255,12 +256,45 @@ const extractResponseSchemas = (
     const args = call.getArguments();
     if (args.length === 0) continue;
     const arg = args[0];
-    if (!arg || !Node.isObjectLiteralExpression(arg)) continue;
+    if (!arg) continue;
 
-    const schema = schemaFromObjectLiteral(arg);
-    if (schema && Object.keys(schema.properties ?? {}).length > 0) {
-      // Keep the first occurrence per status code
-      if (!result[statusCode]) result[statusCode] = schema;
+    let schema: JsonSchema | null = null;
+
+    if (Node.isObjectLiteralExpression(arg)) {
+      // Inline literal: res.json({ id: 1, name: "foo" })
+      const s = schemaFromObjectLiteral(arg);
+      if (Object.keys(s.properties ?? {}).length > 0) schema = s;
+    } else if (Node.isIdentifier(arg)) {
+      // Variable reference: res.json(user) — match against known Zod schemas by naming convention
+      const name = arg.getText().toLowerCase();
+      const match = Object.keys(ctx.zodSchemas).find((k) => {
+        const kl = k.toLowerCase();
+        return (
+          kl === `${name}schema` ||
+          kl === `${name}responseschema` ||
+          kl === `${name}resschema` ||
+          kl === `${name}response`
+        );
+      });
+      if (match) schema = ctx.zodSchemas[match] ?? null;
+    } else if (Node.isCallExpression(arg)) {
+      // res.json(SomeSchema.parse(data)) or res.json(SomeSchema.safeParse(data))
+      const argExpr = arg.getExpression();
+      if (Node.isPropertyAccessExpression(argExpr)) {
+        const calledMethod = argExpr.getName();
+        if (calledMethod === "parse" || calledMethod === "safeParse") {
+          const schemaObj = argExpr.getExpression();
+          if (Node.isIdentifier(schemaObj)) {
+            const schemaName = schemaObj.getText();
+            const found = ctx.zodSchemas[schemaName] ?? null;
+            if (found) schema = found;
+          }
+        }
+      }
+    }
+
+    if (schema && !result[statusCode]) {
+      result[statusCode] = schema;
     }
   }
 

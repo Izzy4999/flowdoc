@@ -1,12 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import type { JSX } from "react";
 import type { RouteDoc } from "./types/spec.js";
 import { useSpec } from "./hooks/use-spec.js";
 import { Sidebar } from "./components/Sidebar.js";
 import { RouteDetail } from "./components/RouteDetail.js";
 
+const STORAGE_KEY = "flowdoc:selectedRoute";
+
+const routeKey = (route: RouteDoc): string => `${route.method}:${route.path}`;
+
 export const App = (): JSX.Element => {
   const { spec, loading, error } = useSpec();
   const [selectedRoute, setSelectedRoute] = useState<RouteDoc | null>(null);
+
+  // Restore last-selected route from localStorage once spec loads
+  useEffect(() => {
+    if (!spec) return;
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    for (const group of spec.groups) {
+      const found = group.routes.find((r) => routeKey(r) === saved);
+      if (found) {
+        setSelectedRoute(found);
+        return;
+      }
+    }
+  }, [spec]);
+
+  const handleSelect = (route: RouteDoc): void => {
+    setSelectedRoute(route);
+    localStorage.setItem(STORAGE_KEY, routeKey(route));
+  };
 
   if (loading) {
     return (
@@ -30,7 +54,7 @@ export const App = (): JSX.Element => {
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-200 overflow-hidden">
-      <Sidebar spec={spec} selectedRoute={selectedRoute} onSelect={setSelectedRoute} />
+      <Sidebar spec={spec} selectedRoute={selectedRoute} onSelect={handleSelect} />
 
       <main className="flex-1 overflow-y-auto">
         {selectedRoute ? (
@@ -38,7 +62,7 @@ export const App = (): JSX.Element => {
             <RouteDetail
               route={selectedRoute}
               baseUrl={spec.info.baseUrl}
-              auth={spec.auth}
+              {...(spec.auth ? { auth: spec.auth } : {})}
             />
           </div>
         ) : (
