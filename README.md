@@ -47,7 +47,7 @@ export default defineConfig({
 - Query parameter schemas from `validateQuery(schema)`, `queryValidator(schema)`
 - Response schemas inferred from `res.json({ ... })` inline objects, `res.json(SomeSchema.parse(data))`, or variable naming conventions (`userResponseSchema`, `userResSchema`)
 
-**Inline middleware docs server (Express only):**
+**Inline middleware docs server:**
 
 ```ts
 import express from "express";
@@ -105,7 +105,23 @@ export class UsersController {
 }
 ```
 
-> NestJS docs are static-site only — use `flowdoc generate` or `flowdoc serve`. The inline Express middleware does not apply.
+**Inline middleware docs server:** Nest's default HTTP adapter is Express, so the Express middleware works as-is:
+
+```ts
+import { NestExpressApplication } from "@nestjs/platform-express";
+import { flowdoc } from "flowdoc-gen";
+
+const app = await NestFactory.create<NestExpressApplication>(AppModule);
+app.use("/docs", flowdoc());
+```
+
+If your app runs on the Fastify adapter instead (`NestFastifyApplication`), register the Fastify plugin:
+
+```ts
+import { flowdocFastify } from "flowdoc-gen";
+
+await app.register(flowdocFastify, { prefix: "/docs" });
+```
 
 ---
 
@@ -141,7 +157,26 @@ fastify.post("/users", {
 });
 ```
 
-> Fastify docs are static-site only — use `flowdoc generate` or `flowdoc serve`.
+**Inline middleware docs server:**
+
+```ts
+import Fastify from "fastify";
+import { flowdocFastify } from "flowdoc-gen";
+
+const fastify = Fastify();
+
+// Docs served at /docs — auto-disabled in production, baseUrl auto-detected
+fastify.register(flowdocFastify, { prefix: "/docs" });
+
+fastify.listen({ port: 3000 });
+```
+
+The middleware auto-disables when `NODE_ENV=production`. To force-enable or force-disable:
+
+```ts
+fastify.register(flowdocFastify, { prefix: "/docs", disabled: false }); // always on
+fastify.register(flowdocFastify, { prefix: "/docs", disabled: true });  // always off
+```
 
 ---
 
@@ -179,7 +214,21 @@ app.post("/users", zValidator("json", CreateUserSchema), async (c) => {
 });
 ```
 
-> Hono docs are static-site only — use `flowdoc generate` or `flowdoc serve`.
+**Inline middleware docs server:**
+
+```ts
+import { Hono } from "hono";
+import { flowdocHono } from "flowdoc-gen";
+
+const app = new Hono();
+
+// Hono has no automatic mount-prefix stripping, so pass `path` matching the route
+app.get("/docs/*", flowdocHono({ path: "/docs" }));
+
+export default app;
+```
+
+The middleware auto-disables when `NODE_ENV=production`. To force-enable or force-disable, pass `disabled: false` / `disabled: true` alongside `path`.
 
 ---
 
@@ -218,7 +267,27 @@ router.post("/users", validateBody(CreateUserSchema), async (ctx) => {
 });
 ```
 
-> Koa docs are static-site only — use `flowdoc generate` or `flowdoc serve`.
+**Inline middleware docs server:** Koa has no built-in mount-prefix stripping, so mount with `koa-mount` (or an equivalent) to serve at a sub-path:
+
+```ts
+import Koa from "koa";
+import mount from "koa-mount";
+import { flowdocKoa } from "flowdoc-gen";
+
+const app = new Koa();
+
+// Docs served at /docs — auto-disabled in production, baseUrl auto-detected
+app.use(mount("/docs", flowdocKoa()));
+
+app.listen(3000);
+```
+
+The middleware auto-disables when `NODE_ENV=production`. To force-enable or force-disable:
+
+```ts
+app.use(mount("/docs", flowdocKoa({ disabled: false }))); // always on
+app.use(mount("/docs", flowdocKoa({ disabled: true })));  // always off
+```
 
 ---
 

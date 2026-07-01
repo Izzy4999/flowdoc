@@ -48,7 +48,19 @@ export const generate = async (opts: GenerateOptions = {}): Promise<FlowDocSpec>
   spinner?.succeed(`Config loaded — ${chalk.cyan(config.name)}`);
 
   // 2. Parse routes
-  spinner?.start(`Scanning ${chalk.cyan(config.entry)} for routes...`);
+  const baseScanLabel = `Scanning ${chalk.cyan(config.entry)} for routes...`;
+  spinner?.start(baseScanLabel);
+
+  // ts-morph parsing has no internal progress hooks, so on large repos this step
+  // can run for a while with no other feedback — tick elapsed time so the spinner
+  // visibly keeps moving instead of looking frozen.
+  const scanStartedAt = Date.now();
+  const scanTicker = spinner
+    ? setInterval(() => {
+        const elapsedSec = Math.round((Date.now() - scanStartedAt) / 1000);
+        spinner.text = `${baseScanLabel} ${chalk.dim(`(${elapsedSec}s elapsed)`)}`;
+      }, 1000)
+    : null;
 
   let routes;
   try {
@@ -65,6 +77,8 @@ export const generate = async (opts: GenerateOptions = {}): Promise<FlowDocSpec>
   } catch (err) {
     spinner?.fail(chalk.red(`Parse failed: ${String(err)}`));
     process.exit(1);
+  } finally {
+    if (scanTicker) clearInterval(scanTicker);
   }
 
   spinner?.succeed(
@@ -72,9 +86,12 @@ export const generate = async (opts: GenerateOptions = {}): Promise<FlowDocSpec>
   );
 
   // 3. Build spec
+  spinner?.start("Building API spec...");
   const spec = buildSpec(routes, config);
+  spinner?.succeed(`Built spec — ${chalk.green(String(spec.groups.length))} groups`);
 
   // 4. Write output
+  spinner?.start("Writing docs output...");
   const outputDir = opts.output ? resolve(cwd, opts.output) : (config.output ?? resolve(cwd, "docs-output"));
   mkdirSync(outputDir, { recursive: true });
 
@@ -83,6 +100,7 @@ export const generate = async (opts: GenerateOptions = {}): Promise<FlowDocSpec>
 
   // 5. Copy UI assets into output dir
   await writeUiHtml(outputDir, config);
+  spinner?.succeed(`Docs written to ${chalk.cyan(outputDir)}`);
 
   if (!opts.quiet) {
     console.log();
