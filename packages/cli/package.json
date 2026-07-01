@@ -1,6 +1,6 @@
 {
   "name": "flowdoc-gen",
-  "version": "0.2.0-beta.1",
+  "version": "0.2.0-beta.2",
   "description": "Auto-generate beautiful API documentation from your Express codebase — no annotations required",
   "type": "module",
   "bin": {
@@ -41,10 +41,22 @@
     "zod-to-json-schema": "^3.24.5"
   },
   "peerDependencies": {
-    "express": ">=4.0.0"
+    "express": ">=4.0.0",
+    "fastify": ">=4.0.0",
+    "koa": ">=2.0.0",
+    "hono": ">=4.0.0"
   },
   "peerDependenciesMeta": {
     "express": {
+      "optional": true
+    },
+    "fastify": {
+      "optional": true
+    },
+    "koa": {
+      "optional": true
+    },
+    "hono": {
       "optional": true
     }
   },
@@ -53,7 +65,11 @@
     "@flowdoc/parser": "workspace:*",
     "@flowdoc/ui": "workspace:*",
     "@types/express": "^5.0.3",
+    "@types/koa": "^3.0.3",
     "@types/node": "^26.0.1",
+    "fastify": "^5.9.0",
+    "hono": "^4.12.27",
+    "koa": "^3.2.1",
     "tsup": "^8.5.0",
     "typescript": "^5.8.3"
   },

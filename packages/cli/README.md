@@ -61,8 +61,19 @@ export default defineConfig({
 
 flowdoc extracts: `@Controller` + `@Get/@Post/@Put/@Patch/@Delete` decorators, class-validator DTOs, Zod pipes.
 
+**Inline middleware:** Nest's default HTTP adapter is Express, so mount the Express middleware directly:
+
+```ts
+import { flowdoc } from "flowdoc-gen";
+
+const app = await NestFactory.create<NestExpressApplication>(AppModule);
+app.use("/docs", flowdoc());
+```
+
+If your app runs on the Fastify adapter (`NestFastifyApplication`), use `flowdocFastify` instead — see the Fastify section below and register it via `app.register(flowdocFastify, { prefix: "/docs" })`.
+
 ```bash
-npx flowdoc serve   # static site generation only
+npx flowdoc serve   # static site generation, works regardless of adapter
 ```
 
 ---
@@ -79,8 +90,17 @@ export default defineConfig({
 
 flowdoc extracts: `fastify.METHOD(path, ...)` calls, `schema.body` / `schema.querystring` route config, Zod schemas.
 
+**Inline middleware** (serves docs at `/docs`):
+
+```ts
+import { flowdocFastify } from "flowdoc-gen";
+
+fastify.register(flowdocFastify, { prefix: "/docs" });
+// Auto-disabled in production. Override: { prefix: "/docs", disabled: false }
+```
+
 ```bash
-npx flowdoc serve   # static site generation only
+npx flowdoc serve   # static site generation
 ```
 
 ---
@@ -97,8 +117,17 @@ export default defineConfig({
 
 flowdoc extracts: `app.METHOD(path, handler)` calls, `zValidator` middleware schemas, path params.
 
+**Inline middleware** (serves docs at `/docs`):
+
+```ts
+import { flowdocHono } from "flowdoc-gen";
+
+// Hono doesn't strip mount prefixes automatically — pass `path` to match the route
+app.get("/docs/*", flowdocHono({ path: "/docs" }));
+```
+
 ```bash
-npx flowdoc serve   # static site generation only
+npx flowdoc serve   # static site generation
 ```
 
 ---
@@ -115,8 +144,18 @@ export default defineConfig({
 
 flowdoc extracts: `router.METHOD(path, ...)` calls via `@koa/router`, Zod/Joi body validation middleware.
 
+**Inline middleware** (serves docs at `/docs`):
+
+```ts
+import mount from "koa-mount";
+import { flowdocKoa } from "flowdoc-gen";
+
+app.use(mount("/docs", flowdocKoa()));
+// Auto-disabled in production. Override: flowdocKoa({ disabled: false })
+```
+
 ```bash
-npx flowdoc serve   # static site generation only
+npx flowdoc serve   # static site generation
 ```
 
 ---

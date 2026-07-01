@@ -81,11 +81,17 @@ const groupByTag = (routes: RouteDoc[]): ApiGroup[] => {
 
 const matchesGlob = (path: string, pattern: string): boolean => {
   // /users/** matches /users and /users/anything
-  const regexStr = pattern
-    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-    .replace(/\/\*\*$/, "(/.*)?")
-    .replace(/\*\*/g, ".*")
-    .replace(/\*/g, "[^/]*");
+  // Single pass: each token in the pattern is classified exactly once,
+  // so a converted token (e.g. ".*") can never be re-matched by a later rule.
+  const regexStr = pattern.replace(
+    /\/\*\*$|\*\*|\*|[.+^${}()|[\]\\]/g,
+    (token) => {
+      if (token === "/**") return "(/.*)?";
+      if (token === "**") return ".*";
+      if (token === "*") return "[^/]*";
+      return `\\${token}`;
+    },
+  );
   return new RegExp(`^${regexStr}$`).test(path);
 };
 
