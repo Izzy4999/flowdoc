@@ -1,6 +1,6 @@
 {
   "name": "flowdoc-gen",
-  "version": "0.2.0-beta.2",
+  "version": "0.2.0-beta.3",
   "description": "Auto-generate beautiful API documentation from your Express codebase — no annotations required",
   "type": "module",
   "bin": {
